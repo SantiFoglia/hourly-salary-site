@@ -248,38 +248,45 @@ export async function generateMetadata({ params }: PageProps) {
   const { rate, kind } = parsed;
   if (!isValidRate(rate)) return {};
 
-  // Títulos/descr SEO por tipo
+  const canonical = `https://hourly-salary-site.vercel.app/${slug}`;
+
   switch (kind) {
     case "monthly":
       return {
         title: `How much is $${rate} an hour per month?`,
         description: `Convert $${rate}/hour into monthly pay, plus weekly, biweekly and yearly gross estimates.`,
+        alternates: { canonical },
       };
     case "biweekly":
       return {
         title: `How much is $${rate} an hour biweekly?`,
         description: `Convert $${rate}/hour into biweekly pay, plus daily, weekly, monthly and yearly gross estimates.`,
+        alternates: { canonical },
       };
     case "weekly":
       return {
         title: `How much is $${rate} an hour per week?`,
         description: `Convert $${rate}/hour into weekly pay, plus daily, biweekly, monthly and yearly gross estimates.`,
+        alternates: { canonical },
       };
     case "daily":
       return {
         title: `How much is $${rate} an hour per day?`,
         description: `Convert $${rate}/hour into daily pay, plus weekly, biweekly, monthly and yearly gross estimates.`,
+        alternates: { canonical },
       };
     case "salary":
       return {
         title: `What salary is $${rate} an hour?`,
         description: `Convert $${rate}/hour into yearly salary (gross), plus monthly, biweekly, weekly and daily estimates.`,
+        alternates: { canonical },
       };
     case "yearly":
     default:
       return {
         title: `How much is $${rate} an hour per year?`,
         description: `Convert $${rate}/hour into yearly pay (gross), plus monthly, biweekly, weekly and daily estimates.`,
+        alternates: { canonical },
       };
   }
 }
