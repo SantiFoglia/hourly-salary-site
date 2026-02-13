@@ -127,6 +127,75 @@ function slugsForRate(rate: number) {
     daily: `${rate}-an-hour-daily`,
   };
 }
+function buildFaq(rate: number, kind: SlugKind) {
+  const baseHours = 40;
+  const baseWeeks = 52;
+  const r = calcFromHourly({ hourlyRate: rate, hoursPerWeek: baseHours, weeksPerYear: baseWeeks });
+
+  const focus =
+    kind === "monthly"
+      ? r.monthly
+      : kind === "biweekly"
+      ? r.biweekly
+      : kind === "weekly"
+      ? r.weekly
+      : kind === "daily"
+      ? r.daily
+      : r.yearly;
+
+  const focusLabel =
+    kind === "monthly"
+      ? "monthly"
+      : kind === "biweekly"
+      ? "biweekly"
+      : kind === "weekly"
+      ? "weekly"
+      : kind === "daily"
+      ? "daily"
+      : "yearly";
+
+  return [
+    {
+      q: `How much is $${rate}/hour ${focusLabel}?`,
+      a: `With a standard assumption of 40 hours per week and 52 weeks per year, $${rate}/hour is about ${formatMoney(
+        focus
+      )} ${focusLabel} (gross).`,
+    },
+    {
+      q: "Does this include taxes?",
+      a: "No. These results are gross estimates (before taxes). Net pay depends on taxes, deductions, and your location.",
+    },
+    {
+      q: "What if I work part-time?",
+      a: "Use the calculator on the home page to set your hours per week (for example 20 or 30 hours).",
+    },
+    {
+      q: "What if I don’t work 52 weeks per year?",
+      a: "Use the calculator to adjust weeks per year (many people use 48–50 weeks to account for vacations/holidays).",
+    },
+    {
+      q: "Is biweekly pay always exactly 2× weekly pay?",
+      a: "In this estimate it is, but real payroll can vary depending on your employer’s pay schedule and overtime/benefits.",
+    },
+  ];
+}
+
+function faqJsonLd(rate: number, kind: SlugKind) {
+  const faqs = buildFaq(rate, kind);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: f.a,
+      },
+    })),
+  };
+}
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
@@ -143,8 +212,14 @@ export default async function Page({ params }: PageProps) {
   const links = slugsForRate(rate);
 
   return (
-    <main className="container main">
-      <section className="section card">
+  <main className="container main">
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(faqJsonLd(rate, kind)),
+      }}
+    />
+    <section className="section card">
         <h1 style={{ marginTop: 0 }}>{copy.h1}</h1>
 
         <p>
@@ -217,7 +292,19 @@ export default async function Page({ params }: PageProps) {
             <div className="small">{rate}-an-hour-daily</div>
           </Link>
         </div>
-
+<h2 style={{ marginTop: 18 }}>FAQ</h2>
+<div style={{ display: "grid", gap: 12 }}>
+  {buildFaq(rate, kind).map((f) => (
+    <div key={f.q} className="kpi">
+      <div className="value" style={{ fontSize: 16 }}>
+        {f.q}
+      </div>
+      <div className="hint" style={{ fontSize: 13, marginTop: 8, color: "var(--muted)" }}>
+        {f.a}
+      </div>
+    </div>
+  ))}
+</div>
         <p style={{ marginTop: 18 }}>
           <Link href="/">← Back to calculator</Link>
         </p>
