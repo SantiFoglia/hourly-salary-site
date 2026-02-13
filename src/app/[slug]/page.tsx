@@ -196,6 +196,52 @@ function faqJsonLd(rate: number, kind: SlugKind) {
     })),
   };
 }
+function kindLabel(kind: SlugKind) {
+  switch (kind) {
+    case "monthly":
+      return "Monthly";
+    case "biweekly":
+      return "Biweekly";
+    case "weekly":
+      return "Weekly";
+    case "daily":
+      return "Daily";
+    case "salary":
+      return "Salary";
+    case "yearly":
+    default:
+      return "Yearly";
+  }
+}
+
+function breadcrumbJsonLd(baseUrl: string, rate: number, kind: SlugKind, slug: string) {
+  const label = kindLabel(kind);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: `$${rate}/hour`,
+        item: `${baseUrl}/how-much-is-${rate}-an-hour`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: label,
+        item: `${baseUrl}/${slug}`,
+      },
+    ],
+  };
+}
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
@@ -214,12 +260,31 @@ export default async function Page({ params }: PageProps) {
   return (
   <main className="container main">
     <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(faqJsonLd(rate, kind)),
-      }}
-    />
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(faqJsonLd(rate, kind)),
+  }}
+/>
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(
+      breadcrumbJsonLd("https://hourly-salary-site.vercel.app", rate, kind, slug)
+    ),
+  }}
+/>
     <section className="section card">
+        <nav className="small" aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
+  <Link href="/" style={{ opacity: 0.9 }}>Home</Link>
+  <span style={{ opacity: 0.6 }}> / </span>
+  <Link href={`/${slugsForRate(rate).yearly}`} style={{ opacity: 0.9 }}>
+    ${rate}/hour
+  </Link>
+  <span style={{ opacity: 0.6 }}> / </span>
+  <span style={{ opacity: 0.9 }}>{kindLabel(kind)}</span>
+</nav>
+
         <h1 style={{ marginTop: 0 }}>{copy.h1}</h1>
 
         <p>
