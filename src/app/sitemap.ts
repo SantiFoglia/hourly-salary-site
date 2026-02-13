@@ -8,7 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1 },
   ];
 
-  for (let rate = 10; rate <= 100; rate++) {
+  for (let rate = 10; rate <= 300; rate++) {
     urls.push({
       url: `${baseUrl}/how-much-is-${rate}-an-hour`,
       changeFrequency: "monthly",

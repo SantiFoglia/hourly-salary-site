@@ -73,7 +73,7 @@ export default async function Page({ params }: PageProps) {
 
 export function generateStaticParams() {
   const params: { slug: string }[] = [];
-  for (let i = 10; i <= 100; i++) {
+  for (let i = 10; i <= 300; i++) {
     params.push({ slug: `how-much-is-${i}-an-hour` });
   }
   return params;
