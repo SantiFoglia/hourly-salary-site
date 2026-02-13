@@ -87,7 +87,7 @@ export default function Home() {
       <p>Quick links for common hourly wages (10–100 USD).</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 }}>
-        {Array.from({ length: 91 }, (_, i) => i + 10).map((rate) => (
+        {Array.from({ length: 296 }, (_, i) => i + 10).map((rate) => (
           <Link
             key={rate}
             href={`/how-much-is-${rate}-an-hour`}
