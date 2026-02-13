@@ -30,6 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="google-site-verification" content="xMJNiEBNOkbVeQfdZhYaUh9rTdAx5U8cQHp2euqAx90" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         
         <main style={{ minHeight: "80vh" }}>
