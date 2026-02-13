@@ -1,17 +1,24 @@
-export const metadata = { title: "Contact" };
+import type { Metadata } from "next";
 
-export default function Contact() {
+export const metadata: Metadata = {
+  title: "Contact | HourlySalaryCalculator",
+  description: "How to contact the site owner.",
+};
+
+export default function ContactPage() {
   return (
-    <main style={{ padding: "40px", maxWidth: 800, margin: "0 auto" }}>
-      <h1>Contact</h1>
+    <section className="section card">
+      <h1 style={{ marginTop: 0 }}>Contact</h1>
 
-      <p>
-        If you have any questions about HourlySalaryCalculator, feel free to reach out.
+      <p>If you have questions, feedback, or correction requests, email:</p>
+
+      <p style={{ fontSize: 18 }}>
+        <a href="mailto:hourlysalaryhelp@gmail.com">hourlysalaryhelp@gmail.com</a>
       </p>
 
-      <p>
-        Email: <strong>hourlysalaryhelp@gmail.com</strong>
+      <p style={{ marginTop: 16 }}>
+        Please include the page URL and the hourly rate you were checking, if relevant.
       </p>
-    </main>
+    </section>
   );
 }
