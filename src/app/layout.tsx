@@ -1,60 +1,60 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: {
-    default: "HourlySalaryCalculator – Convert Hourly Wage to Yearly Income",
-    template: "%s | HourlySalaryCalculator",
-  },
-  description:
-    "Free online hourly to salary calculator. Instantly convert hourly pay into daily, weekly, monthly and yearly income.",
-  metadataBase: new URL("https://hourlysalarycalculator.com"),
+  title: "HourlySalaryCalculator",
+  description: "Convert hourly wage to yearly, monthly, weekly and daily pay (gross).",
 };
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const year = new Date().getFullYear();
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
   return (
     <html lang="en">
-      <head>
-        <meta name="google-site-verification" content="xMJNiEBNOkbVeQfdZhYaUh9rTdAx5U8cQHp2euqAx90" />
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        
-        <main style={{ minHeight: "80vh" }}>
-          {children}
+      <body>
+        <header className="header">
+          <div className="container">
+            <nav className="nav">
+              <div className="brand">
+                <Link href="/">HourlySalaryCalculator</Link>
+                <span className="badge">Free</span>
+              </div>
+
+              <div className="navlinks">
+                <Link href="/">Calculator</Link>
+                <Link href="/about">About</Link>
+                <Link href="/contact">Contact</Link>
+                <Link href="/privacy-policy">Privacy</Link>
+                <Link href="/terms-of-service">Terms</Link>
+                <Link href="/disclaimer">Disclaimer</Link>
+              </div>
+            </nav>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="container">{children}</div>
         </main>
 
-        <footer
-          style={{
-            marginTop: "60px",
-            padding: "20px",
-            borderTop: "1px solid #ddd",
-            textAlign: "center",
-            fontSize: "14px",
-          }}
-        >
-          <a href="/about">About</a> |{" "}
-          <a href="/privacy-policy">Privacy Policy</a> |{" "}
-          <a href="/terms-of-service">Terms of Service</a> |{" "}
-          <a href="/disclaimer">Disclaimer</a> |{" "}
-          <a href="/contact">Contact</a>
-        </footer>
+        <footer className="footer">
+          <div className="container">
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "space-between" }}>
+              <div>© {year} HourlySalaryCalculator</div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                <Link href="/about">About</Link>
+                <Link href="/privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service">Terms</Link>
+                <Link href="/disclaimer">Disclaimer</Link>
+                <Link href="/contact">Contact</Link>
+              </div>
+            </div>
 
+            <div style={{ marginTop: 10 }}>
+              This site provides general estimates. Results may vary by location, taxes, and benefits.
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

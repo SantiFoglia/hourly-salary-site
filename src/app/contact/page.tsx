@@ -10,7 +10,7 @@ export default function Contact() {
       </p>
 
       <p>
-        Email: <strong>contact.hourlycalculator@gmail.com</strong>
+        Email: <strong>hourlysalaryhelp@gmail.com</strong>
       </p>
     </main>
   );
