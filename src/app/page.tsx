@@ -48,8 +48,9 @@ export default function Home() {
   }, [safeRate, safeHours, safeWeeks]);
 
   const examples = useMemo(() => buildExamples(clamp(safeRate || 20, 1, 500)), [safeRate]);
-
   const popularRates = useMemo(() => buildPopularRates(), []);
+
+  const rateForLinks = clamp(Math.round(safeRate || 20), 1, 500);
 
   return (
     <main className="container main">
@@ -153,13 +154,26 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ marginTop: 14 }}>
+          {/* LINKS */}
+          <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
             <a
-              href={`/how-much-is-${clamp(Math.round(safeRate || 20), 1, 500)}-an-hour`}
+              href={`/how-much-is-${rateForLinks}-an-hour`}
               className="badge"
               style={{ display: "inline-block" }}
             >
-              View the dedicated page for ${clamp(Math.round(safeRate || 20), 1, 500)}/hour →
+              View the dedicated page for ${rateForLinks}/hour →
+            </a>
+
+            <a
+              href={`/after-tax/${rateForLinks}-an-hour`}
+              className="badge"
+              style={{
+                display: "inline-block",
+                background: "rgba(34,197,94,0.14)",
+                border: "1px solid rgba(34,197,94,0.35)",
+              }}
+            >
+              After-tax estimate for ${rateForLinks}/hour →
             </a>
           </div>
         </section>
@@ -187,10 +201,8 @@ export default function Home() {
 
       {/* Example scenarios */}
       <section className="section card">
-        <h2>Example scenarios for ${clamp(Math.round(safeRate || 20), 1, 500)}/hour</h2>
-        <p className="small">
-          Quick comparisons for common work schedules.
-        </p>
+        <h2>Example scenarios for ${rateForLinks}/hour</h2>
+        <p className="small">Quick comparisons for common work schedules.</p>
 
         <div className="linksGrid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
           {examples.map((ex) => (
@@ -210,9 +222,7 @@ export default function Home() {
       {/* Browse rates */}
       <section className="section card">
         <h2>Browse popular hourly wages</h2>
-        <p className="small">
-          Explore dedicated pages with breakdown, FAQ and related rates.
-        </p>
+        <p className="small">Explore dedicated pages with breakdown, FAQ and related rates.</p>
 
         <div className="linksGrid">
           {popularRates.slice(0, 80).map((rate) => (
