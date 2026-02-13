@@ -1,263 +1,240 @@
 import { calcFromHourly, formatMoney } from "@/lib/calc";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-function parseRateFromSlug(slug: string) {
-  const match = slug.match(/^how-much-is-(\d+(?:\.\d+)?)-an-hour$/);
-  if (!match) return null;
+type SlugKind = "yearly" | "monthly" | "biweekly" | "weekly" | "daily" | "salary";
 
-  const rate = Number(match[1]);
-  if (!Number.isFinite(rate) || rate <= 0 || rate > 500) return null;
+function parseSlug(slug: string): { rate: number; kind: SlugKind } | null {
+  // ✅ Formato original:
+  // how-much-is-20-an-hour  -> yearly
+  let m = slug.match(/^how-much-is-(\d+(?:\.\d+)?)-an-hour$/);
+  if (m) return { rate: Number(m[1]), kind: "yearly" };
 
-  return rate;
+  // ✅ Nuevos formatos SEO:
+  // 20-an-hour-salary       -> salary (yearly)
+  m = slug.match(/^(\d+(?:\.\d+)?)-an-hour-salary$/);
+  if (m) return { rate: Number(m[1]), kind: "salary" };
+
+  // 20-an-hour-per-month    -> monthly
+  m = slug.match(/^(\d+(?:\.\d+)?)-an-hour-per-month$/);
+  if (m) return { rate: Number(m[1]), kind: "monthly" };
+
+  // 20-an-hour-biweekly     -> biweekly
+  m = slug.match(/^(\d+(?:\.\d+)?)-an-hour-biweekly$/);
+  if (m) return { rate: Number(m[1]), kind: "biweekly" };
+
+  // 20-an-hour-weekly       -> weekly
+  m = slug.match(/^(\d+(?:\.\d+)?)-an-hour-weekly$/);
+  if (m) return { rate: Number(m[1]), kind: "weekly" };
+
+  // 20-an-hour-daily        -> daily
+  m = slug.match(/^(\d+(?:\.\d+)?)-an-hour-daily$/);
+  if (m) return { rate: Number(m[1]), kind: "daily" };
+
+  return null;
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
+function isValidRate(rate: number) {
+  return Number.isFinite(rate) && rate > 0 && rate <= 500;
 }
 
-function buildRelatedRates(rate: number) {
-  // Armamos links cercanos + algunos "comunes"
-  const near = [
-    rate - 5,
-    rate - 2,
-    rate - 1,
-    rate + 1,
-    rate + 2,
-    rate + 5,
-  ]
-    .map((x) => clamp(Math.round(x), 1, 500))
-    .filter((x, idx, arr) => x !== rate && arr.indexOf(x) === idx);
+function getPageCopy(rate: number, kind: SlugKind) {
+  // Valores por defecto (podés cambiarlos si querés)
+  const HOURS_PER_WEEK = 40;
+  const WEEKS_PER_YEAR = 52;
 
-  const common = [10, 15, 20, 25, 30, 35, 40, 50, 60, 75, 100].filter((x) => x !== rate);
-
-  // Evitamos duplicados y limitamos
-  const all = Array.from(new Set([...near, ...common])).slice(0, 12);
-  return all;
-}
-
-function faqItems(rate: number) {
-  const yearly = calcFromHourly({ hourlyRate: rate, hoursPerWeek: 40, weeksPerYear: 52 }).yearly;
-  return [
-    {
-      q: `How much is $${rate}/hour per year (gross)?`,
-      a: `At 40 hours per week and 52 weeks per year, $${rate}/hour is approximately ${formatMoney(
-        yearly
-      )} per year (gross).`,
-    },
-    {
-      q: "Does this include taxes?",
-      a: "No. These are gross (pre-tax) estimates. Net pay depends on taxes, deductions, and your location.",
-    },
-    {
-      q: "What if I work fewer weeks per year?",
-      a: "Use the calculator on the home page to set your weeks per year (for example 48, 50, or 52).",
-    },
-    {
-      q: "What if I work part-time?",
-      a: "Use the calculator to set your hours per week (for example 20 or 30 hours).",
-    },
-    {
-      q: "Is biweekly pay always exactly 2× weekly?",
-      a: "In this estimate, yes. Real payroll can vary depending on pay periods, overtime, and benefits.",
-    },
-  ];
-}
-
-function faqJsonLd(rate: number) {
-  const faqs = faqItems(rate);
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
-    })),
+  const base = {
+    hoursPerWeek: HOURS_PER_WEEK,
+    weeksPerYear: WEEKS_PER_YEAR,
   };
+
+  // Títulos + descripción según la intención
+  switch (kind) {
+    case "monthly":
+      return {
+        h1: `How much is $${rate}/hour per month?`,
+        intro: `If you make $${rate}/hour and work ${HOURS_PER_WEEK} hours per week for ${WEEKS_PER_YEAR} weeks, your gross monthly pay estimate is`,
+        focusLabel: "Monthly",
+        base,
+      };
+    case "biweekly":
+      return {
+        h1: `How much is $${rate}/hour biweekly?`,
+        intro: `If you make $${rate}/hour and work ${HOURS_PER_WEEK} hours per week for ${WEEKS_PER_YEAR} weeks, your gross biweekly pay estimate is`,
+        focusLabel: "Biweekly",
+        base,
+      };
+    case "weekly":
+      return {
+        h1: `How much is $${rate}/hour per week?`,
+        intro: `If you make $${rate}/hour and work ${HOURS_PER_WEEK} hours per week for ${WEEKS_PER_YEAR} weeks, your gross weekly pay estimate is`,
+        focusLabel: "Weekly",
+        base,
+      };
+    case "daily":
+      return {
+        h1: `How much is $${rate}/hour per day?`,
+        intro: `If you make $${rate}/hour and assume an 8-hour workday, your gross daily pay estimate is`,
+        focusLabel: "Daily",
+        base,
+      };
+    case "salary":
+      return {
+        h1: `What salary is $${rate}/hour?`,
+        intro: `If you make $${rate}/hour and work ${HOURS_PER_WEEK} hours per week for ${WEEKS_PER_YEAR} weeks, your gross yearly salary estimate is`,
+        focusLabel: "Yearly",
+        base,
+      };
+    case "yearly":
+    default:
+      return {
+        h1: `How much is $${rate}/hour per year?`,
+        intro: `If you make $${rate}/hour and work ${HOURS_PER_WEEK} hours per week for ${WEEKS_PER_YEAR} weeks, your gross yearly pay is`,
+        focusLabel: "Yearly",
+        base,
+      };
+  }
 }
 
-function webPageJsonLd(rate: number) {
+function getValueByKind(result: ReturnType<typeof calcFromHourly>, kind: SlugKind) {
+  switch (kind) {
+    case "monthly":
+      return result.monthly;
+    case "biweekly":
+      return result.biweekly;
+    case "weekly":
+      return result.weekly;
+    case "daily":
+      return result.daily;
+    case "salary":
+    case "yearly":
+    default:
+      return result.yearly;
+  }
+}
+
+function slugsForRate(rate: number) {
   return {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: `How much is $${rate} an hour per year?`,
-    description: `Convert $${rate}/hour into daily, weekly, biweekly, monthly and yearly gross pay.`,
+    yearly: `how-much-is-${rate}-an-hour`,
+    salary: `${rate}-an-hour-salary`,
+    monthly: `${rate}-an-hour-per-month`,
+    biweekly: `${rate}-an-hour-biweekly`,
+    weekly: `${rate}-an-hour-weekly`,
+    daily: `${rate}-an-hour-daily`,
   };
 }
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
 
-  const rate = parseRateFromSlug(slug);
-  if (rate === null) notFound();
+  const parsed = parseSlug(slug);
+  if (!parsed) notFound();
 
-  const hoursPerWeek = 40;
-  const weeksPerYear = 52;
-  const r = calcFromHourly({ hourlyRate: rate, hoursPerWeek, weeksPerYear });
+  const { rate, kind } = parsed;
+  if (!isValidRate(rate)) notFound();
 
-  const related = buildRelatedRates(rate);
+  const copy = getPageCopy(rate, kind);
+  const r = calcFromHourly({ hourlyRate: rate, ...copy.base });
+  const focusValue = getValueByKind(r, kind);
+  const links = slugsForRate(rate);
 
   return (
     <main className="container main">
-      {/* JSON-LD (SEO) */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd(rate)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(rate)) }}
-      />
+      <section className="section card">
+        <h1 style={{ marginTop: 0 }}>{copy.h1}</h1>
 
-      {/* HERO */}
-      <section className="hero card">
-        <h1>How much is ${rate}/hour per year?</h1>
         <p>
-          If you make <b>${rate}/hour</b> and work <b>{hoursPerWeek}</b> hours per week for{" "}
-          <b>{weeksPerYear}</b> weeks, your estimated <b>gross yearly pay</b> is{" "}
-          <b>{formatMoney(r.yearly)}</b>.
+          {copy.intro} <b>{formatMoney(focusValue)}</b>.
         </p>
-        <p className="small" style={{ marginTop: 10 }}>
-          Want a custom estimate? Try the full calculator (hours/week, weeks/year).
-        </p>
-        <p style={{ marginTop: 10 }}>
-          <a href="/" className="badge" style={{ display: "inline-block" }}>
-            Back to calculator
-          </a>
-        </p>
-      </section>
 
-      {/* GRID: Breakdown + Notes */}
-      <div className="grid">
-        <section className="results card">
-          <h2>Breakdown (gross)</h2>
+        <h2 style={{ marginTop: 16 }}>Breakdown (gross)</h2>
 
-          <div className="kpis">
-            <div className="kpi">
-              <div className="label">Daily</div>
-              <div className="value">{formatMoney(r.daily)}</div>
-              <div className="hint">Assumes 8-hour workday</div>
-            </div>
-
-            <div className="kpi">
-              <div className="label">Weekly</div>
-              <div className="value">{formatMoney(r.weekly)}</div>
-              <div className="hint">{hoursPerWeek} hours/week</div>
-            </div>
-
-            <div className="kpi">
-              <div className="label">Biweekly</div>
-              <div className="value">{formatMoney(r.biweekly)}</div>
-              <div className="hint">2× weekly estimate</div>
-            </div>
-
-            <div className="kpi">
-              <div className="label">Monthly</div>
-              <div className="value">{formatMoney(r.monthly)}</div>
-              <div className="hint">Yearly ÷ 12</div>
-            </div>
-
-            <div className="kpi" style={{ gridColumn: "1 / -1" }}>
-              <div className="label">Yearly</div>
-              <div className="value">{formatMoney(r.yearly)}</div>
-              <div className="hint">{weeksPerYear} weeks/year</div>
-            </div>
+        <div className="kpis">
+          <div className="kpi">
+            <div className="label">Daily</div>
+            <div className="value">{formatMoney(r.daily)}</div>
+            <div className="hint">Assumes 8-hour day</div>
           </div>
-        </section>
 
-        <section className="section card">
-          <h2>What this means</h2>
-          <p>
-            Hourly rates can be confusing because your real take-home pay depends on taxes, benefits, overtime,
-            bonuses, and where you live. This page shows a <b>simple gross estimate</b> to help you compare
-            offers quickly.
-          </p>
+          <div className="kpi">
+            <div className="label">Weekly</div>
+            <div className="value">{formatMoney(r.weekly)}</div>
+            <div className="hint">{copy.base.hoursPerWeek} hours/week</div>
+          </div>
 
-          <h2 style={{ marginTop: 14 }}>Common use cases</h2>
-          <ul style={{ lineHeight: 1.9, color: "var(--muted)", margin: "10px 0 0", paddingLeft: 18 }}>
-            <li>Job offers (hourly → yearly)</li>
-            <li>Contractor rates (budget planning)</li>
-            <li>Part-time vs full-time comparisons</li>
-          </ul>
-        </section>
-      </div>
+          <div className="kpi">
+            <div className="label">Biweekly</div>
+            <div className="value">{formatMoney(r.biweekly)}</div>
+            <div className="hint">2× weekly estimate</div>
+          </div>
 
-      {/* SEO TEXT SECTION */}
-      <section className="section card">
-        <h2>How to calculate ${rate}/hour per year</h2>
-        <p>
-          The basic formula is:
-          <br />
-          <b>Hourly rate × hours per week × weeks per year</b>.
-        </p>
-        <p>
-          For <b>${rate}/hour</b>, with <b>{hoursPerWeek}</b> hours/week and <b>{weeksPerYear}</b> weeks/year:
-          <br />
-          <b>
-            ${rate} × {hoursPerWeek} × {weeksPerYear} = {formatMoney(r.yearly)}
-          </b>
-          .
-        </p>
+          <div className="kpi">
+            <div className="label">Monthly</div>
+            <div className="value">{formatMoney(r.monthly)}</div>
+            <div className="hint">Yearly ÷ 12</div>
+          </div>
 
-        <h2 style={{ marginTop: 16 }}>Gross vs net pay</h2>
-        <p>
-          This website shows <b>gross</b> estimates (before taxes). Your net salary can be lower depending on
-          deductions and local tax rules. If you need a precise number, consult a tax professional.
-        </p>
-      </section>
-
-      {/* FAQ */}
-      <section className="section card">
-        <h2>FAQ</h2>
-        <div style={{ display: "grid", gap: 12 }}>
-          {faqItems(rate).map((f) => (
-            <div key={f.q} className="kpi">
-              <div className="value" style={{ fontSize: 16 }}>
-                {f.q}
-              </div>
-              <div className="hint" style={{ fontSize: 13, marginTop: 8, color: "var(--muted)" }}>
-                {f.a}
-              </div>
-            </div>
-          ))}
+          <div className="kpi" style={{ gridColumn: "1 / -1" }}>
+            <div className="label">Yearly</div>
+            <div className="value">{formatMoney(r.yearly)}</div>
+            <div className="hint">{copy.base.weeksPerYear} weeks/year</div>
+          </div>
         </div>
-      </section>
 
-      {/* Related rates */}
-      <section className="section card">
-        <h2>Related hourly wages</h2>
-        <p className="small">
-          Explore similar hourly rates to compare salary outcomes quickly.
-        </p>
-
+        <h2 style={{ marginTop: 18 }}>More pages for ${rate}/hour</h2>
         <div className="linksGrid">
-          {related.map((x) => (
-            <a key={x} className="linkCard" href={`/how-much-is-${x}-an-hour`}>
-              How much is <b>${x}/hour</b> per year?
-              <div className="small" style={{ marginTop: 6 }}>
-                Estimate gross salary
-              </div>
-            </a>
-          ))}
+          <Link className="linkCard" href={`/${links.yearly}`}>
+            Yearly pay page
+            <div className="small">how-much-is-{rate}-an-hour</div>
+          </Link>
+
+          <Link className="linkCard" href={`/${links.salary}`}>
+            Salary (yearly) page
+            <div className="small">{rate}-an-hour-salary</div>
+          </Link>
+
+          <Link className="linkCard" href={`/${links.monthly}`}>
+            Monthly pay page
+            <div className="small">{rate}-an-hour-per-month</div>
+          </Link>
+
+          <Link className="linkCard" href={`/${links.biweekly}`}>
+            Biweekly pay page
+            <div className="small">{rate}-an-hour-biweekly</div>
+          </Link>
+
+          <Link className="linkCard" href={`/${links.weekly}`}>
+            Weekly pay page
+            <div className="small">{rate}-an-hour-weekly</div>
+          </Link>
+
+          <Link className="linkCard" href={`/${links.daily}`}>
+            Daily pay page
+            <div className="small">{rate}-an-hour-daily</div>
+          </Link>
         </div>
 
-        <p className="small" style={{ marginTop: 12 }}>
-          Need a custom schedule? Go back to the <a href="/">calculator</a>.
+        <p style={{ marginTop: 18 }}>
+          <Link href="/">← Back to calculator</Link>
         </p>
       </section>
     </main>
   );
 }
 
-/** Static pages for SEO (pre-render 10..100) */
 export function generateStaticParams() {
   const params: { slug: string }[] = [];
   for (let i = 10; i <= 100; i++) {
     params.push({ slug: `how-much-is-${i}-an-hour` });
+    params.push({ slug: `${i}-an-hour-salary` });
+    params.push({ slug: `${i}-an-hour-per-month` });
+    params.push({ slug: `${i}-an-hour-biweekly` });
+    params.push({ slug: `${i}-an-hour-weekly` });
+    params.push({ slug: `${i}-an-hour-daily` });
   }
   return params;
 }
@@ -265,20 +242,44 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
 
-  const rate = parseRateFromSlug(slug);
-  if (rate === null) return {};
+  const parsed = parseSlug(slug);
+  if (!parsed) return {};
 
-  const canonical = `https://hourly-salary-site.vercel.app/${slug}`;
+  const { rate, kind } = parsed;
+  if (!isValidRate(rate)) return {};
 
-  return {
-    title: `How much is $${rate} an hour per year? (Salary Calculator)`,
-    description: `Convert $${rate}/hour into daily, weekly, biweekly, monthly and yearly gross pay. Quick estimate and FAQ.`,
-    alternates: { canonical },
-    openGraph: {
-      title: `How much is $${rate} an hour per year?`,
-      description: `Gross pay estimate for $${rate}/hour with breakdown (daily, weekly, biweekly, monthly, yearly).`,
-      url: canonical,
-      type: "article",
-    },
-  };
+  // Títulos/descr SEO por tipo
+  switch (kind) {
+    case "monthly":
+      return {
+        title: `How much is $${rate} an hour per month?`,
+        description: `Convert $${rate}/hour into monthly pay, plus weekly, biweekly and yearly gross estimates.`,
+      };
+    case "biweekly":
+      return {
+        title: `How much is $${rate} an hour biweekly?`,
+        description: `Convert $${rate}/hour into biweekly pay, plus daily, weekly, monthly and yearly gross estimates.`,
+      };
+    case "weekly":
+      return {
+        title: `How much is $${rate} an hour per week?`,
+        description: `Convert $${rate}/hour into weekly pay, plus daily, biweekly, monthly and yearly gross estimates.`,
+      };
+    case "daily":
+      return {
+        title: `How much is $${rate} an hour per day?`,
+        description: `Convert $${rate}/hour into daily pay, plus weekly, biweekly, monthly and yearly gross estimates.`,
+      };
+    case "salary":
+      return {
+        title: `What salary is $${rate} an hour?`,
+        description: `Convert $${rate}/hour into yearly salary (gross), plus monthly, biweekly, weekly and daily estimates.`,
+      };
+    case "yearly":
+    default:
+      return {
+        title: `How much is $${rate} an hour per year?`,
+        description: `Convert $${rate}/hour into yearly pay (gross), plus monthly, biweekly, weekly and daily estimates.`,
+      };
+  }
 }
