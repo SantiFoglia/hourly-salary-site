@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { calcFromHourly, formatMoney } from "@/lib/calc";
 
@@ -15,24 +16,21 @@ export default function Home() {
   return (
     <main style={{ maxWidth: 860, margin: "40px auto", padding: "0 16px", fontFamily: "system-ui" }}>
       <h1>HourlySalaryCalculator</h1>
-        <p>
-          Free tool to convert your hourly wage into annual, monthly, weekly and daily income estimates.
-       </p>
-       
+      <p>Free tool to convert your hourly wage into annual, monthly, weekly and daily income estimates.</p>
+
       <section style={{ marginTop: 20 }}>
-  <h2>How it works</h2>
-  <p>
-    Simply enter your hourly wage, number of hours worked per week, and weeks worked per year.
-    Our calculator will instantly estimate your gross yearly, monthly, biweekly and daily income.
-  </p>
+        <h2>How it works</h2>
+        <p>
+          Simply enter your hourly wage, number of hours worked per week, and weeks worked per year.
+          Our calculator will instantly estimate your gross yearly, monthly, biweekly and daily income.
+        </p>
 
-  <h2>Who is this calculator for?</h2>
-  <p>
-    This tool is ideal for employees, freelancers, contractors, and job seekers who want to
-    understand how much an hourly rate translates into yearly salary.
-  </p>
-</section>
-
+        <h2>Who is this calculator for?</h2>
+        <p>
+          This tool is ideal for employees, freelancers, contractors, and job seekers who want to
+          understand how much an hourly rate translates into yearly salary.
+        </p>
+      </section>
 
       <section style={{ display: "grid", gap: 12, marginTop: 18 }}>
         <label>
@@ -85,14 +83,12 @@ export default function Home() {
 
       <hr style={{ margin: "22px 0" }} />
 
-      <hr style={{ margin: "22px 0" }} />
-
       <h2>Browse hourly rates</h2>
       <p>Quick links for common hourly wages (10–100 USD).</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 }}>
         {Array.from({ length: 91 }, (_, i) => i + 10).map((rate) => (
-          <a
+          <Link
             key={rate}
             href={`/how-much-is-${rate}-an-hour`}
             style={{
@@ -101,10 +97,11 @@ export default function Home() {
               border: "1px solid #ddd",
               borderRadius: 8,
               textDecoration: "none",
+              color: "inherit",
             }}
           >
             ${rate}/hour → yearly
-          </a>
+          </Link>
         ))}
       </div>
     </main>

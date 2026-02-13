@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { calcFromHourly, formatMoney } from "@/lib/calc";
 import { notFound } from "next/navigation";
 
@@ -15,6 +16,10 @@ function parseRateFromSlug(slug: string) {
   return rate;
 }
 
+function clampRate(n: number) {
+  return Math.min(500, Math.max(1, n));
+}
+
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
 
@@ -22,6 +27,13 @@ export default async function Page({ params }: PageProps) {
   if (rate === null) notFound();
 
   const r = calcFromHourly({ hourlyRate: rate, hoursPerWeek: 40, weeksPerYear: 52 });
+
+  const related = [
+    clampRate(rate - 1),
+    clampRate(rate + 1),
+    clampRate(rate + 5),
+    clampRate(rate + 10),
+  ].filter((v, i, arr) => arr.indexOf(v) === i && v !== rate);
 
   return (
     <main style={{ maxWidth: 860, margin: "40px auto", padding: "0 16px", fontFamily: "system-ui" }}>
@@ -41,8 +53,19 @@ export default async function Page({ params }: PageProps) {
         <li><b>Yearly:</b> {formatMoney(r.yearly)}</li>
       </ul>
 
+      <hr style={{ marginTop: "2rem" }} />
+
+      <h3>Related hourly wages</h3>
+      <ul style={{ lineHeight: 1.9 }}>
+        {related.map((v) => (
+          <li key={v}>
+            <Link href={`/how-much-is-${v}-an-hour`}>How much is ${v}/hour per year?</Link>
+          </li>
+        ))}
+      </ul>
+
       <p style={{ marginTop: 24 }}>
-        <a href="/">Back to calculator</a>
+        <Link href="/">Back to calculator</Link>
       </p>
     </main>
   );
