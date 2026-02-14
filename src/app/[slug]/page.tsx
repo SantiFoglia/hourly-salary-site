@@ -127,6 +127,17 @@ function slugsForRate(rate: number) {
     daily: `${rate}-an-hour-daily`,
   };
 }
+function afterTaxSlugsForRate(rate: number) {
+  return {
+    yearly: `after-tax/${rate}-an-hour`,
+    salary: `after-tax/${rate}-an-hour-salary`,
+    monthly: `after-tax/${rate}-an-hour-per-month`,
+    biweekly: `after-tax/${rate}-an-hour-biweekly`,
+    weekly: `after-tax/${rate}-an-hour-weekly`,
+    daily: `after-tax/${rate}-an-hour-daily`,
+  };
+}
+
 function buildFaq(rate: number, kind: SlugKind) {
   const baseHours = 40;
   const baseWeeks = 52;
@@ -256,6 +267,7 @@ export default async function Page({ params }: PageProps) {
   const r = calcFromHourly({ hourlyRate: rate, ...copy.base });
   const focusValue = getValueByKind(r, kind);
   const links = slugsForRate(rate);
+  const afterTax = afterTaxSlugsForRate(rate);
 
   return (
   <main className="container main">
@@ -326,37 +338,66 @@ export default async function Page({ params }: PageProps) {
         </div>
 
         <h2 style={{ marginTop: 18 }}>More pages for ${rate}/hour</h2>
-        <div className="linksGrid">
-          <Link className="linkCard" href={`/${links.yearly}`}>
-            Yearly pay page
-            <div className="small">how-much-is-{rate}-an-hour</div>
-          </Link>
 
-          <Link className="linkCard" href={`/${links.salary}`}>
-            Salary (yearly) page
-            <div className="small">{rate}-an-hour-salary</div>
-          </Link>
+<div className="linksGrid">
+  {/* Gross cluster */}
+  <Link className="linkCard" href={`/${links.yearly}`}>
+    <b>Gross yearly page</b>
+    <div className="small">{links.yearly}</div>
+  </Link>
 
-          <Link className="linkCard" href={`/${links.monthly}`}>
-            Monthly pay page
-            <div className="small">{rate}-an-hour-per-month</div>
-          </Link>
+  <Link className="linkCard" href={`/${links.salary}`}>
+    <b>Gross salary (yearly)</b>
+    <div className="small">{links.salary}</div>
+  </Link>
 
-          <Link className="linkCard" href={`/${links.biweekly}`}>
-            Biweekly pay page
-            <div className="small">{rate}-an-hour-biweekly</div>
-          </Link>
+  <Link className="linkCard" href={`/${links.monthly}`}>
+    <b>Gross monthly pay</b>
+    <div className="small">{links.monthly}</div>
+  </Link>
 
-          <Link className="linkCard" href={`/${links.weekly}`}>
-            Weekly pay page
-            <div className="small">{rate}-an-hour-weekly</div>
-          </Link>
+  <Link className="linkCard" href={`/${links.biweekly}`}>
+    <b>Gross biweekly pay</b>
+    <div className="small">{links.biweekly}</div>
+  </Link>
 
-          <Link className="linkCard" href={`/${links.daily}`}>
-            Daily pay page
-            <div className="small">{rate}-an-hour-daily</div>
-          </Link>
-        </div>
+  <Link className="linkCard" href={`/${links.weekly}`}>
+    <b>Gross weekly pay</b>
+    <div className="small">{links.weekly}</div>
+  </Link>
+
+  <Link className="linkCard" href={`/${links.daily}`}>
+    <b>Gross daily pay</b>
+    <div className="small">{links.daily}</div>
+  </Link>
+
+  {/* After-tax cluster */}
+  <Link className="linkCard" href={`/${afterTax.yearly}`}>
+    <b>After-tax (yearly)</b>
+    <div className="small">{afterTax.yearly}</div>
+  </Link>
+
+  <Link className="linkCard" href={`/${afterTax.monthly}`}>
+    <b>After-tax (monthly)</b>
+    <div className="small">{afterTax.monthly}</div>
+  </Link>
+
+  <Link className="linkCard" href={`/${afterTax.weekly}`}>
+    <b>After-tax (weekly)</b>
+    <div className="small">{afterTax.weekly}</div>
+  </Link>
+
+  <Link className="linkCard" href={`/${afterTax.biweekly}`}>
+    <b>After-tax (biweekly)</b>
+    <div className="small">{afterTax.biweekly}</div>
+  </Link>
+
+  <Link className="linkCard" href={`/${afterTax.daily}`}>
+    <b>After-tax (daily)</b>
+    <div className="small">{afterTax.daily}</div>
+  </Link>
+</div>
+
 <h2 style={{ marginTop: 18 }}>FAQ</h2>
 <div style={{ display: "grid", gap: 12 }}>
   {buildFaq(rate, kind).map((f) => (
